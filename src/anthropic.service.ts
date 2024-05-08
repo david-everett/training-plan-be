@@ -18,8 +18,8 @@ import {
   getMaxLongRunDates,
   getHighMileageWeekDate,
   parseTrainingPlan,
+  getRaceWeekStartDate,
 } from './trainingPlanHelper';
-
 @Injectable()
 export class AnthropicService {
   private supabase: SupabaseClient;
@@ -43,9 +43,10 @@ export class AnthropicService {
     numMaxLongRuns: number,
     weeklyMileage: number,
     approach: string,
-  ): Promise<any> {
+  ): Promise<{ trainingPlan: string; trainingPlanId: number }> {
     const currentDate = new Date();
     const startDate = getStartDate(currentDate);
+    const finalWeek = getRaceWeekStartDate(date);
     const lastFewWeeksMileage = getLastFewWeeksMileage(
       userRunningData,
       4,
@@ -60,14 +61,7 @@ export class AnthropicService {
     <system>
     You are a ${race} training coach. Use the attached training plan as a guide to create a personalized ${race} training plan in JSON format. The plan should start on ${
       startDate.toISOString().split('T')[0]
-    } and lead up to the race day on ${new Date(date).toLocaleDateString(
-      'en-US',
-      {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      },
-    )}.
+    } and lead up to race which is during the week of ${finalWeek}.
     
     Current Week Mileage:
     - I have run ${getCurrentWeekMileage(
@@ -82,13 +76,14 @@ export class AnthropicService {
     Initial Mileage Build-Up:
     - Gradually increase mileage, starting from my current ${lastFewWeeksMileage} miles per week.
     - Include rest weeks every 3-4 weeks to allow for recovery.
+    - ${getHoldMileageText(approach, weeklyMileage)}
 
 
     Key Training Milestones:
     - Include ${numMaxLongRuns} ${longRun}-mile long runs on the following dates: ${getMaxLongRunDates(
       date,
       numMaxLongRuns,
-    )}.
+    )}. You may only includes runs at ${longRun} on those dates.
     - Cap the weekly mileage at ${weeklyMileage} miles, reached only once during the week of ${getHighMileageWeekDate(
       date,
     )}.
@@ -107,7 +102,7 @@ export class AnthropicService {
     - Week 2 of taper: Further reduce mileage to about 50% of the peak week, with a long run of ${Math.round(
       longRun * 0.4,
     )} miles.
-    - Final week, race week: The mileage should be 20% - 30% of the peak plus the 26.2 mile long run for race week.
+    - The third week and fianl week of the training plan MUST start on ${finalWeek}. The mileage for this week should be 20% - 30% of the peak week plus the 26.2 mile long run for race day.
 
     Ensure that the plan strictly follows these requirements:
     1. The ${numMaxLongRuns} ${longRun}-mile long runs must be scheduled with the last one three weeks before the race and any previous ones two weeks apart.
@@ -120,13 +115,12 @@ export class AnthropicService {
 
     Return only the JSON object, without any additional text or explanations.
     It is crucial that you return the plan as a valid JSON object, without any additional text or explanations. The JSON object should be parsable by standard JSON parsers.
-
-    Think through all of the rules before coming up with a plan.
     </system>
     `;
 
-    const response = await this.callAnthropicApi(prompt);
+    // console.log(prompt);
 
+    const response = await this.callAnthropicApi(prompt);
     if (!response.content[0] || !response.content[0].text) {
       console.log(response);
       throw new Error('Unexpected response from Anthropic API');
@@ -142,13 +136,13 @@ export class AnthropicService {
         race: race,
         date: date,
       })
-      .single();
+      .select('id')
+      .single<any>();
 
     if (error) {
       throw new Error(`Error saving training plan: ${error.message}`);
     }
-
-    return response.content[0].text;
+    return { trainingPlan: response.content[0].text, trainingPlanId: data.id };
   }
 
   async callAnthropicApi(prompt: string): Promise<any> {
@@ -157,7 +151,8 @@ export class AnthropicService {
         'https://api.anthropic.com/v1/messages',
         {
           model: 'claude-3-opus-20240229',
-          max_tokens: 2500,
+          // temperature: 0.,
+          max_tokens: 4096,
           messages: [{ role: 'user', content: prompt }],
         },
         {

@@ -79,17 +79,33 @@ export function getNextFullWeek(dateString: string): string {
   return nextMonday.toISOString().split('T')[0];
 }
 
-export function getHoldMileageText(approach: string): string {
+export function getHoldMileageText(
+  approach: string,
+  weeklyMileage: number,
+): string {
+  let mileageRange: string;
+
   switch (approach) {
     case 'buildSlowly':
-      return '- Because there is ample time, take your time building a base slowly. However, ensure weekly progression remains healthy throughout the training cycle.';
+      mileageRange = `${Math.round(weeklyMileage * 0.45)}-${Math.round(
+        weeklyMileage * 0.55,
+      )}`;
+      break;
     case 'buildAndRelax':
-      return '- Because there is ample time before the race, build a good base getting to ~70% of the max weekly mileage before holding a bit.';
+      mileageRange = `${Math.round(weeklyMileage * 0.55)}-${Math.round(
+        weeklyMileage * 0.64,
+      )}`;
+      break;
     case 'fullSend':
-      return '- while there is ample time before the race, continue to build progressively while accounting for rest weeks.';
+      mileageRange = `${Math.round(weeklyMileage * 0.64)}-${Math.round(
+        weeklyMileage * 0.73,
+      )}`;
+      break;
     default:
       return '';
   }
+
+  return `Because we have more weeks than the typical marathon plan, maintain around ${mileageRange} miles per week if necessary.`;
 }
 
 export function getMaxLongRunDates(
@@ -131,4 +147,17 @@ export function parseTrainingPlan(jsonString: string): Week[] {
   }));
 
   return trainingPlan;
+}
+
+export function getRaceWeekStartDate(raceDate: string): string {
+  const raceDateObj = new Date(raceDate);
+  const dayOfWeek = raceDateObj.getDay();
+  const daysToSubtract = (dayOfWeek + 6) % 7;
+
+  const raceWeekStartDate = new Date(
+    raceDateObj.getFullYear(),
+    raceDateObj.getMonth(),
+    raceDateObj.getDate() - daysToSubtract,
+  );
+  return raceWeekStartDate.toISOString().split('T')[0];
 }
