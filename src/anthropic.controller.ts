@@ -26,6 +26,7 @@ export class AnthropicController {
     @Body('longRun') longRun: number,
     @Body('numMaxLongRuns') numMaxLongRuns: number,
     @Body('weeklyMileage') weeklyMileage: number,
+    @Body('approach') approach: string,
   ): Promise<any> {
     // Fetch the user's running data from Supabase
     const { data: runningStatsData, error: runningStatsError } =
@@ -52,6 +53,7 @@ export class AnthropicController {
       longRun,
       numMaxLongRuns,
       weeklyMileage,
+      approach,
     );
 
     return trainingPlan;

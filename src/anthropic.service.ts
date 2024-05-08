@@ -17,6 +17,7 @@ import {
   UserRunningData,
   getMaxLongRunDates,
   getHighMileageWeekDate,
+  parseTrainingPlan,
 } from './trainingPlanHelper';
 
 @Injectable()
@@ -41,6 +42,7 @@ export class AnthropicService {
     longRun: number,
     numMaxLongRuns: number,
     weeklyMileage: number,
+    approach: string,
   ): Promise<any> {
     const currentDate = new Date();
     const startDate = getStartDate(currentDate);
@@ -80,7 +82,7 @@ export class AnthropicService {
     Initial Mileage Build-Up:
     - Gradually increase mileage, starting from my current ${lastFewWeeksMileage} miles per week.
     - Include rest weeks every 3-4 weeks to allow for recovery.
-    ${getHoldMileageText(date)}
+
 
     Key Training Milestones:
     - Include ${numMaxLongRuns} ${longRun}-mile long runs on the following dates: ${getMaxLongRunDates(
@@ -133,7 +135,7 @@ export class AnthropicService {
       .from('training_plans')
       .insert({
         user_id: userId,
-        plan: response.content[0].text,
+        plan: parseTrainingPlan(response.content[0].text),
         race_name: raceName,
         race: race,
         date: date,

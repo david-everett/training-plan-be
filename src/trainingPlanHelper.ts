@@ -79,17 +79,16 @@ export function getNextFullWeek(dateString: string): string {
   return nextMonday.toISOString().split('T')[0];
 }
 
-export function getHoldMileageText(dateString: string): string {
-  const raceDate = new Date(dateString);
-  const currentDate = new Date();
-  const weeksUntilRace = Math.ceil(
-    (raceDate.getTime() - currentDate.getTime()) / (1000 * 3600 * 24 * 7),
-  );
-
-  if (weeksUntilRace > 18) {
-    return '- Because we have more weeks than the typical marathon plan, maintain around 30-35 miles per week for a period before increasing further.';
-  } else {
-    return '';
+export function getHoldMileageText(approach: string): string {
+  switch (approach) {
+    case 'buildSlowly':
+      return '- Because there is ample time, take your time building a base slowly. However, ensure weekly progression remains healthy throughout the training cycle.';
+    case 'buildAndRelax':
+      return '- Because there is ample time before the race, build a good base getting to ~70% of the max weekly mileage before holding a bit.';
+    case 'fullSend':
+      return '- while there is ample time before the race, continue to build progressively while accounting for rest weeks.';
+    default:
+      return '';
   }
 }
 
@@ -115,4 +114,21 @@ export function getHighMileageWeekDate(raceDate: string): string {
   const highMileageWeekDate = new Date(raceDateObj);
   highMileageWeekDate.setDate(highMileageWeekDate.getDate() - 3 * 7);
   return highMileageWeekDate.toISOString().split('T')[0];
+}
+
+export function parseTrainingPlan(jsonString: string): Week[] {
+  // Remove any backslashes and newline characters
+  const cleanedString = jsonString.replace(/\\n/g, '').replace(/\\/g, '');
+
+  // Parse the cleaned JSON string
+  const parsedData = JSON.parse(cleanedString);
+
+  // Map the parsed data to the Week interface
+  const trainingPlan: Week[] = parsedData.map((week: any) => ({
+    startDate: week.week,
+    totalMiles: week.total_miles,
+    longRun: week.long_run === 'Marathon' ? 26.2 : week.long_run,
+  }));
+
+  return trainingPlan;
 }
