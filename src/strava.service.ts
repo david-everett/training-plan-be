@@ -34,7 +34,7 @@ export class StravaService {
     }
 
     const perPage = 200;
-    const totalPages = 5;
+    const totalPages = 2;
     let allActivities: any[] = [];
 
     for (let page = 1; page <= totalPages; page++) {

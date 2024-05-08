@@ -8,20 +8,58 @@ export interface UserRunningData {
   // other properties
 }
 
+export function getCurrentWeekMileage(
+  userData: UserRunningData,
+  currentDate: Date,
+): number {
+  const currentWeek = userData.weeks.find((week) => {
+    const weekStartDate = new Date(week.startDate);
+    const weekEndDate = new Date(weekStartDate);
+    weekEndDate.setDate(weekEndDate.getDate() + 6);
+    return currentDate >= weekStartDate && currentDate <= weekEndDate;
+  });
+
+  if (currentWeek) {
+    return currentWeek.totalMiles;
+  }
+
+  return 0;
+}
+
 export function getLastFewWeeksMileage(
   userData: UserRunningData,
   numWeeks: number,
+  currentDate: Date,
 ): number {
   const sortedWeeks = userData.weeks.sort(
     (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime(),
   );
-  const recentFullWeeks = sortedWeeks.slice(1, numWeeks + 1); // Exclude the current partial week
+
+  const recentFullWeeks = sortedWeeks.slice(1, numWeeks + 1);
   const totalMileage = recentFullWeeks.reduce(
     (sum, week) => sum + week.totalMiles,
     0,
   );
   const averageMileage = totalMileage / numWeeks;
-  return Math.round(averageMileage);
+
+  const mostRecentWeekMileage = recentFullWeeks[0].totalMiles;
+  const recommendedMileage = Math.max(averageMileage, mostRecentWeekMileage);
+
+  return recommendedMileage;
+}
+
+export function getStartDate(currentDate: Date): Date {
+  const startDate = new Date(currentDate);
+  const dayOfWeek = startDate.getDay();
+
+  if (dayOfWeek === 1) {
+    // If today is Monday, start the plan today
+    return startDate;
+  } else {
+    // Otherwise, start the plan from the previous Monday
+    startDate.setDate(startDate.getDate() - ((dayOfWeek + 6) % 7));
+    return startDate;
+  }
 }
 
 export function getCurrentCondition(weeklyMileage: number): string {

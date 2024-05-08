@@ -11,6 +11,8 @@ import {
   getCurrentCondition,
   getHoldMileageText,
   getLastFewWeeksMileage,
+  getCurrentWeekMileage,
+  getStartDate,
   getNextFullWeek,
   UserRunningData,
   getMaxLongRunDates,
@@ -40,7 +42,13 @@ export class AnthropicService {
     numMaxLongRuns: number,
     weeklyMileage: number,
   ): Promise<any> {
-    const lastFewWeeksMileage = getLastFewWeeksMileage(userRunningData, 4);
+    const currentDate = new Date();
+    const startDate = getStartDate(currentDate);
+    const lastFewWeeksMileage = getLastFewWeeksMileage(
+      userRunningData,
+      4,
+      currentDate,
+    );
     const currentCondition = getCurrentCondition(weeklyMileage);
 
     const prompt = `<documents>
@@ -48,9 +56,9 @@ export class AnthropicService {
     </documents>
 
     <system>
-    You are a ${race} training coach. Use the attached training plan as a guide to create a personalized ${race} training plan in JSON format. The plan should start on ${getNextFullWeek(
-      new Date().toISOString(),
-    )} and lead up to the race day on ${new Date(date).toLocaleDateString(
+    You are a ${race} training coach. Use the attached training plan as a guide to create a personalized ${race} training plan in JSON format. The plan should start on ${
+      startDate.toISOString().split('T')[0]
+    } and lead up to the race day on ${new Date(date).toLocaleDateString(
       'en-US',
       {
         year: 'numeric',
@@ -59,8 +67,15 @@ export class AnthropicService {
       },
     )}.
     
+    Current Week Mileage:
+    - I have run ${getCurrentWeekMileage(
+      userRunningData,
+      currentDate,
+    )} miles so far this week.
+    - There are ${7 - currentDate.getDay()} days remaining in the current week.
+
     Current Condition:
-    - I am a ${currentCondition} runner, currently running ${lastFewWeeksMileage} miles per week.
+    - I am a ${currentCondition} runner, currently running an average of ${lastFewWeeksMileage} miles per week.
 
     Initial Mileage Build-Up:
     - Gradually increase mileage, starting from my current ${lastFewWeeksMileage} miles per week.
@@ -90,9 +105,7 @@ export class AnthropicService {
     - Week 2 of taper: Further reduce mileage to about 50% of the peak week, with a long run of ${Math.round(
       longRun * 0.4,
     )} miles.
-    - Final week of the race: Reduce mileage to about 30% of the peak week, with a short long run of ${Math.round(
-      longRun * 0.3,
-    )} miles early in the week.
+    - Final week, race week: The mileage should be 20% - 30% of the peak plus the 26.2 mile long run for race week.
 
     Ensure that the plan strictly follows these requirements:
     1. The ${numMaxLongRuns} ${longRun}-mile long runs must be scheduled with the last one three weeks before the race and any previous ones two weeks apart.
@@ -100,7 +113,8 @@ export class AnthropicService {
     3. Rest weeks must be included after high-mileage weeks and the ${longRun}-mile long runs.
     4. The final 3-week taper should follow the mileage and long run guidelines provided above, with decreasing mileage and long run distances each week.
 
-    Please provide the plan strictly in valid JSON format, with each weekly entry enclosed in curly braces and detailing the week's date range, total mileage, and long run distance. Ensure the plan aligns with the progressive mileage increase, key training milestones, and tapering period outlined above.
+    Please provide the plan strictly in valid JSON format, with each weekly entry enclosed in curly braces and key value pairs for "week" which is the date of the Monday to start the week, "total mileage", and "long run distance". 
+    Ensure the plan aligns with the progressive mileage increase, key training milestones, and tapering period outlined above.
 
     Return only the JSON object, without any additional text or explanations.
     It is crucial that you return the plan as a valid JSON object, without any additional text or explanations. The JSON object should be parsable by standard JSON parsers.
@@ -108,7 +122,6 @@ export class AnthropicService {
     `;
 
     const response = await this.callAnthropicApi(prompt);
-    console.log(prompt);
 
     if (!response.content[0] || !response.content[0].text) {
       console.log(response);
