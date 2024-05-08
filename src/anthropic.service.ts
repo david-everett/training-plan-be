@@ -120,6 +120,8 @@ export class AnthropicService {
 
     Return only the JSON object, without any additional text or explanations.
     It is crucial that you return the plan as a valid JSON object, without any additional text or explanations. The JSON object should be parsable by standard JSON parsers.
+
+    Think through all of the rules before coming up with a plan.
     </system>
     `;
 
