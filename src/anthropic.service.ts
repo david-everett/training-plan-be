@@ -113,7 +113,7 @@ export class AnthropicService {
     3. Rest weeks must be included after high-mileage weeks and the ${longRun}-mile long runs.
     4. The final 3-week taper should follow the mileage and long run guidelines provided above, with decreasing mileage and long run distances each week.
 
-    Please provide the plan strictly in valid JSON format, with each weekly entry enclosed in curly braces and key value pairs for "week" which is the date of the Monday to start the week, "total mileage", and "long run distance". 
+    Please provide the plan strictly in valid JSON format, with each weekly entry enclosed in curly braces and key value pairs for "week" which is the date of the Monday to start the week, "total miles", and "long run". It is imperative that you stick to these column names.
     Ensure the plan aligns with the progressive mileage increase, key training milestones, and tapering period outlined above.
 
     Return only the JSON object, without any additional text or explanations.
