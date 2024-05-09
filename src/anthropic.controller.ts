@@ -5,16 +5,17 @@ import { ConfigService } from '@nestjs/config';
 
 @Controller('anthropic')
 export class AnthropicController {
-  private readonly supabase: SupabaseClient;
+  private supabaseClient: SupabaseClient;
 
   constructor(
     private readonly anthropicService: AnthropicService,
     private readonly configService: ConfigService,
   ) {
-    this.supabase = createClient(
-      this.configService.get('SUPABASE_URL'),
-      this.configService.get('SUPABASE_KEY'),
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const supabaseServiceRoleKey = this.configService.get<string>(
+      'SUPABASE_SERVICE_ROLE_KEY',
     );
+    this.supabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey);
   }
 
   @Post('training-plan')
@@ -30,7 +31,7 @@ export class AnthropicController {
   ): Promise<any> {
     // Fetch the user's running data from Supabase
     const { data: runningStatsData, error: runningStatsError } =
-      await this.supabase
+      await this.supabaseClient
         .from('running_stats')
         .select('training_data')
         .eq('user_id', userId)

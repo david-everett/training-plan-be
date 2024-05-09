@@ -23,13 +23,14 @@ import {
 @Injectable()
 export class AnthropicService {
   private supabase: SupabaseClient;
+
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
     this.supabase = createClient(
       this.configService.get('SUPABASE_URL'),
-      this.configService.get('SUPABASE_KEY'),
+      this.configService.get('SUPABASE_SERVICE_ROLE_KEY'),
     );
   }
 

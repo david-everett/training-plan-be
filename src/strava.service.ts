@@ -15,8 +15,10 @@ export class StravaService {
     private readonly configService: ConfigService,
   ) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseKey = this.configService.get<string>('SUPABASE_KEY');
-    this.supabaseClient = createClient(supabaseUrl, supabaseKey);
+    const supabaseServiceRoleKey = this.configService.get<string>(
+      'SUPABASE_SERVICE_ROLE_KEY',
+    );
+    this.supabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey);
   }
 
   async getRunningStats(userId: string): Promise<{
