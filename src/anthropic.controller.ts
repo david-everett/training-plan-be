@@ -2,6 +2,8 @@ import { Controller, Post, Body } from '@nestjs/common';
 import { AnthropicService } from './anthropic.service';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
+import { getStartDate, parseTrainingPlan } from './trainingPlanHelper';
+import { checkFirstWeekDate, checkMaxLongRun } from './trainingPlanChecks';
 
 @Controller('anthropic')
 export class AnthropicController {
@@ -45,18 +47,83 @@ export class AnthropicController {
       );
     }
 
-    const trainingPlan = await this.anthropicService.generateTrainingPlan(
-      userId,
-      raceName,
-      race,
-      date,
-      runningStatsData.training_data,
-      longRun,
-      numMaxLongRuns,
-      weeklyMileage,
-      approach,
-    );
+    const expectedStartDate = getStartDate(new Date())
+      .toISOString()
+      .split('T')[0];
+    let trainingPlan;
+    let trainingPlanId: number;
+    let attempts = 0;
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    const maxAttempts = 1;
 
-    return trainingPlan;
+    while (attempts < maxAttempts) {
+      const { trainingPlan: plan, tokenUsage } =
+        await this.anthropicService.generateTrainingPlan(
+          userId,
+          raceName,
+          race,
+          date,
+          runningStatsData.training_data,
+          longRun,
+          numMaxLongRuns,
+          weeklyMileage,
+          approach,
+        );
+
+      totalInputTokens += tokenUsage.inputTokens;
+      totalOutputTokens += tokenUsage.outputTokens;
+
+      if (
+        checkFirstWeekDate(plan, expectedStartDate) &&
+        checkMaxLongRun(plan, longRun)
+      ) {
+        trainingPlan = plan;
+        const totalInputCost = (totalInputTokens / 1000000) * 15;
+        const totalOutputCost = (totalOutputTokens / 1000000) * 75;
+        const totalCost = totalInputCost + totalOutputCost;
+        // Save the valid training plan to Supabase
+        const { data, error } = await this.supabaseClient
+          .from('training_plans')
+          .insert({
+            user_id: userId,
+            plan: parseTrainingPlan(JSON.stringify(trainingPlan)),
+            race_name: raceName,
+            race: race,
+            date: date,
+            cost: totalCost,
+          })
+          .select('id')
+          .single<any>();
+
+        if (error) {
+          throw new Error(`Error saving training plan: ${error.message}`);
+        }
+        trainingPlanId = data.id;
+        break;
+      }
+      attempts++;
+    }
+
+    if (attempts === maxAttempts) {
+      // console.log('Generated training plan:', trainingPlan);
+      console.log(
+        'First week date check:',
+        checkFirstWeekDate([trainingPlan], expectedStartDate),
+      );
+      console.log(
+        'Max long run check:',
+        checkMaxLongRun([trainingPlan], longRun),
+      );
+      throw new Error(
+        'Failed to generate a valid training plan after multiple attempts',
+      );
+    }
+
+    return {
+      trainingPlan,
+      trainingPlanId,
+      attempts: attempts + 1,
+    };
   }
 }

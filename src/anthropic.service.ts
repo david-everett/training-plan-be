@@ -20,6 +20,7 @@ import {
   parseTrainingPlan,
   getRaceWeekStartDate,
 } from './trainingPlanHelper';
+
 @Injectable()
 export class AnthropicService {
   private supabase: SupabaseClient;
@@ -44,7 +45,10 @@ export class AnthropicService {
     numMaxLongRuns: number,
     weeklyMileage: number,
     approach: string,
-  ): Promise<{ trainingPlan: string; trainingPlanId: number }> {
+  ): Promise<{
+    trainingPlan: string;
+    tokenUsage: { inputTokens: number; outputTokens: number };
+  }> {
     const currentDate = new Date();
     const startDate = getStartDate(currentDate);
     const finalWeek = getRaceWeekStartDate(date);
@@ -60,7 +64,7 @@ export class AnthropicService {
     </documents>
 
     <system>
-    You are a ${race} training coach. Use the attached training plan as a guide to create a personalized ${race} training plan in JSON format. The plan should start on ${
+    You are a ${race} training coach helping runners in the future. Use the attached training plan as a guide to create a personalized ${race} training plan in JSON format. The plan should start on ${
       startDate.toISOString().split('T')[0]
     } and lead up to race which is during the week of ${finalWeek}.
     
@@ -119,31 +123,21 @@ export class AnthropicService {
     </system>
     `;
 
-    // console.log(prompt);
-
     const response = await this.callAnthropicApi(prompt);
     if (!response.content[0] || !response.content[0].text) {
       console.log(response);
       throw new Error('Unexpected response from Anthropic API');
     }
 
-    // Save the training plan to Supabase
-    const { data, error } = await this.supabase
-      .from('training_plans')
-      .insert({
-        user_id: userId,
-        plan: parseTrainingPlan(response.content[0].text),
-        race_name: raceName,
-        race: race,
-        date: date,
-      })
-      .select('id')
-      .single<any>();
+    const parsedPlan = JSON.parse(response.content[0].text);
 
-    if (error) {
-      throw new Error(`Error saving training plan: ${error.message}`);
-    }
-    return { trainingPlan: response.content[0].text, trainingPlanId: data.id };
+    return {
+      trainingPlan: parsedPlan,
+      tokenUsage: {
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+      },
+    };
   }
 
   async callAnthropicApi(prompt: string): Promise<any> {
