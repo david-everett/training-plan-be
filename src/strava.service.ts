@@ -67,8 +67,8 @@ export class StravaService {
 
     const weeks: WeekData[] = [];
     for (let i = 0; i < 10; i++) {
-      const startDate = moment().startOf('week').subtract(i, 'weeks');
-      const endDate = moment().endOf('week').subtract(i, 'weeks');
+      const startDate = moment().startOf('isoWeek').subtract(i, 'weeks');
+      const endDate = moment().endOf('isoWeek').subtract(i, 'weeks');
       const weekRuns = runs.filter((run) =>
         moment(run.start_date).isBetween(startDate, endDate, null, '[]'),
       );
