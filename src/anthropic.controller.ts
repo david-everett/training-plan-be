@@ -73,6 +73,7 @@ export class AnthropicController {
 
       totalInputTokens += tokenUsage.inputTokens;
       totalOutputTokens += tokenUsage.outputTokens;
+      console.log(plan);
 
       if (
         checkFirstWeekDate(plan, expectedStartDate) &&

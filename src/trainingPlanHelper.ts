@@ -105,7 +105,7 @@ export function getHoldMileageText(
       return '';
   }
 
-  return `Because we have more weeks than the typical marathon plan, maintain around ${mileageRange} miles per week if necessary.`;
+  return `Because we have more weeks than the typical marathon plan, start by building around ${mileageRange} miles per week if necessary.`;
 }
 
 export function getMaxLongRunDates(
@@ -115,20 +115,41 @@ export function getMaxLongRunDates(
   const raceDateObj = new Date(raceDate);
   const maxLongRunDates = [];
 
-  for (let i = 0; i < numMaxLongRuns; i++) {
-    const weeksBeforeRace = (numMaxLongRuns - i) * 2 + 1;
-    const maxLongRunDate = new Date(raceDateObj);
-    maxLongRunDate.setDate(maxLongRunDate.getDate() - weeksBeforeRace * 7);
+  // Calculate the date of the previous Monday
+  const previousMonday = new Date(raceDateObj);
+  previousMonday.setDate(
+    previousMonday.getDate() - ((previousMonday.getDay() + 6) % 7),
+  );
+
+  // Calculate the date of the last long run (3 weeks before the previous Monday)
+  const lastLongRunDate = new Date(previousMonday);
+  lastLongRunDate.setDate(lastLongRunDate.getDate() - 3 * 7);
+  maxLongRunDates.push(lastLongRunDate.toISOString().split('T')[0]);
+
+  // Calculate the dates of the remaining long runs
+  for (let i = 1; i < numMaxLongRuns; i++) {
+    const weeksFromLastRun = i * 2; // 2 weeks apart from each other
+    const maxLongRunDate = new Date(lastLongRunDate);
+    maxLongRunDate.setDate(maxLongRunDate.getDate() - weeksFromLastRun * 7);
     maxLongRunDates.push(maxLongRunDate.toISOString().split('T')[0]);
   }
 
-  return maxLongRunDates.join(', ');
+  return maxLongRunDates.reverse().join(', ');
 }
 
 export function getHighMileageWeekDate(raceDate: string): string {
   const raceDateObj = new Date(raceDate);
-  const highMileageWeekDate = new Date(raceDateObj);
+
+  // Calculate the date of the previous Monday
+  const previousMonday = new Date(raceDateObj);
+  previousMonday.setDate(
+    previousMonday.getDate() - ((previousMonday.getDay() + 6) % 7),
+  );
+
+  // Calculate the date of the high mileage week (3 weeks before the previous Monday)
+  const highMileageWeekDate = new Date(previousMonday);
   highMileageWeekDate.setDate(highMileageWeekDate.getDate() - 3 * 7);
+
   return highMileageWeekDate.toISOString().split('T')[0];
 }
 

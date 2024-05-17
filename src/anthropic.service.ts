@@ -59,6 +59,19 @@ export class AnthropicService {
     );
     const currentCondition = getCurrentCondition(weeklyMileage);
 
+    function getHighMileageText(
+      currentMileage: number,
+      highMileage: number,
+    ): string {
+      if (currentMileage < highMileage * 0.5) {
+        return `reached only once during the week of ${getHighMileageWeekDate(
+          date,
+        )}`;
+      } else {
+        return '';
+      }
+    }
+
     const prompt = `<documents>
     ${TRAINING_PLAN_DOCUMENT}
     </documents>
@@ -74,24 +87,30 @@ export class AnthropicService {
       currentDate,
     )} miles so far this week.
     - There are ${7 - currentDate.getDay()} days remaining in the current week.
-
+  
     Current Condition:
     - I am a ${currentCondition} runner, currently running an average of ${lastFewWeeksMileage} miles per week.
 
     Initial Mileage Build-Up:
-    - Gradually increase mileage, starting from my current ${lastFewWeeksMileage} miles per week.
+    - ${
+      longRun < lastFewWeeksMileage
+        ? `- Since the target long run distance (${longRun} miles) is lower than my current weekly mileage (${lastFewWeeksMileage} miles), start the plan at my current mileage level and maintain it for the first few weeks.`
+        : `- Gradually increase mileage, starting from my current ${lastFewWeeksMileage} miles per week.`
+    }
     - Include rest weeks every 3-4 weeks to allow for recovery.
     - ${getHoldMileageText(approach, weeklyMileage)}
 
 
     Key Training Milestones:
-    - Include ${numMaxLongRuns} ${longRun}-mile long runs on the following dates: ${getMaxLongRunDates(
+    - Include ${numMaxLongRuns} ${longRun}-mile long runs on the following weeks: ${getMaxLongRunDates(
       date,
       numMaxLongRuns,
     )}. You may only includes runs at ${longRun} on those dates.
-    - Cap the weekly mileage at ${weeklyMileage} miles, reached only once during the week of ${getHighMileageWeekDate(
-      date,
+    - Each week should be ${weeklyMileage} miles or less, ${getHighMileageText(
+      lastFewWeeksMileage,
+      weeklyMileage,
     )}.
+
     - Include long runs of ${longRun - 2} to ${
       longRun - 4
     } miles 2 weeks before the first ${longRun}-mile long run and 2 weeks after the last ${longRun}-mile long run.
@@ -110,10 +129,20 @@ export class AnthropicService {
     - The third week and fianl week of the training plan MUST start on ${finalWeek}. The mileage for this week should be 20% - 30% of the peak week plus the 26.2 mile long run for race day.
 
     Ensure that the plan strictly follows these requirements:
-    1. The ${numMaxLongRuns} ${longRun}-mile long runs must be scheduled with the last one three weeks before the race and any previous ones two weeks apart.
-    2. The weekly mileage must not exceed ${weeklyMileage} miles, and this should only occur once during the week of the final ${longRun}-mile long run.
-    3. Rest weeks must be included after high-mileage weeks and the ${longRun}-mile long runs.
-    4. The final 3-week taper should follow the mileage and long run guidelines provided above, with decreasing mileage and long run distances each week.
+    1. The ${numMaxLongRuns} ${longRun}-mile long runs must be scheduled for the weeks of ${getMaxLongRunDates(
+      date,
+      numMaxLongRuns,
+    )}.
+    2. All long runs outside of ${getMaxLongRunDates(
+      date,
+      numMaxLongRuns,
+    )} should be a max distance of ${longRun - 2}
+    3. The weekly mileage must not exceed ${weeklyMileage} miles.
+    4. Rest weeks must be included after high-mileage weeks and the ${longRun}-mile long runs.
+    5. The final 3-week taper should follow the mileage and long run guidelines provided above, with decreasing mileage and long run distances each week.
+    6. Weeks start on Monday starting with the first week being ${
+      startDate.toISOString().split('T')[0]
+    }
 
     Please provide the plan strictly in valid JSON format, with each weekly entry enclosed in curly braces and key value pairs for "week" which is the date of the Monday to start the week, "total miles", and "long run". It is imperative that you stick to these column names.
     Ensure the plan aligns with the progressive mileage increase, key training milestones, and tapering period outlined above.
@@ -123,6 +152,7 @@ export class AnthropicService {
     </system>
     `;
 
+    console.log(prompt);
     const response = await this.callAnthropicApi(prompt);
     if (!response.content[0] || !response.content[0].text) {
       console.log(response);
