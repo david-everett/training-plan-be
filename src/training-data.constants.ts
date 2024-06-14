@@ -131,3 +131,54 @@ export const TRAINING_PLAN_DOCUMENT = `
 </document_content>
 </document>
 `;
+
+export const HALF_MARATHON_TRAINING_PLAN_DOCUMENT = `
+<document index="1">
+<source>half_marathon_training_plan.txt</source>
+<document_content>{
+  "novice": [
+    {"week": 1, "total_miles": 12, "long_run": 4},
+    {"week": 2, "total_miles": 12, "long_run": 4},
+    {"week": 3, "total_miles": 14, "long_run": 5},
+    {"week": 4, "total_miles": 14, "long_run": 5},
+    {"week": 5, "total_miles": 16, "long_run": 6},
+    {"week": 6, "total_miles": 16, "long_run": 6},
+    {"week": 7, "total_miles": 18, "long_run": 7},
+    {"week": 8, "total_miles": 18, "long_run": 8},
+    {"week": 9, "total_miles": 20, "long_run": 8},
+    {"week": 10, "total_miles": 22, "long_run": 9},
+    {"week": 11, "total_miles": 22, "long_run": 10},
+    {"week": 12, "total_miles": 18, "long_run": 10}
+  ],
+  "intermediate": [
+    {"week": 1, "total_miles": 17, "long_run": 4},
+    {"week": 2, "total_miles": 18, "long_run": 5},
+    {"week": 3, "total_miles": 21, "long_run": 6},
+    {"week": 4, "total_miles": 22, "long_run": 7},
+    {"week": 5, "total_miles": 25, "long_run": 8},
+    {"week": 6, "total_miles": 26, "long_run": 8},
+    {"week": 7, "total_miles": 28, "long_run": 9},
+    {"week": 8, "total_miles": 30, "long_run": 10},
+    {"week": 9, "total_miles": 23, "long_run": 10},
+    {"week": 10, "total_miles": 33, "long_run": 11},
+    {"week": 11, "total_miles": 36, "long_run": 12},
+    {"week": 12, "total_miles": 29, "long_run": 13}
+  ],
+  "advanced": [
+    {"week": 1, "total_miles": 21, "long_run": 6},
+    {"week": 2, "total_miles": 22, "long_run": 7},
+    {"week": 3, "total_miles": 24, "long_run": 8},
+    {"week": 4, "total_miles": 25, "long_run": 8},
+    {"week": 5, "total_miles": 27, "long_run": 9},
+    {"week": 6, "total_miles": 28, "long_run": 9},
+    {"week": 7, "total_miles": 30, "long_run": 10},
+    {"week": 8, "total_miles": 31, "long_run": 11},
+    {"week": 9, "total_miles": 24, "long_run": 11},
+    {"week": 10, "total_miles": 35, "long_run": 12},
+    {"week": 11, "total_miles": 38, "long_run": 13},
+    {"week": 12, "total_miles": 31, "long_run": 13}
+  ]
+}
+</document_content>
+</document>
+`;

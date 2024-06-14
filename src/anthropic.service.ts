@@ -5,6 +5,7 @@ import {
   TRAINING_DATA,
   RACE_INFO,
   TRAINING_PLAN_DOCUMENT,
+  HALF_MARATHON_TRAINING_PLAN_DOCUMENT,
 } from './training-data.constants';
 import { HttpService } from '@nestjs/axios';
 import {
@@ -37,7 +38,6 @@ export class AnthropicService {
 
   async generateTrainingPlan(
     userId: string,
-    raceName: string,
     race: string,
     date: string,
     userRunningData: UserRunningData,
@@ -73,7 +73,11 @@ export class AnthropicService {
     }
 
     const prompt = `<documents>
-    ${TRAINING_PLAN_DOCUMENT}
+    ${
+      race === 'Marathon'
+        ? TRAINING_PLAN_DOCUMENT
+        : HALF_MARATHON_TRAINING_PLAN_DOCUMENT
+    }
     </documents>
 
     <system>
@@ -126,7 +130,7 @@ export class AnthropicService {
     - Week 2 of taper: Further reduce mileage to about 50% of the peak week, with a long run of ${Math.round(
       longRun * 0.4,
     )} miles.
-    - The third week and fianl week of the training plan MUST start on ${finalWeek}. The mileage for this week should be 20% - 30% of the peak week plus the 26.2 mile long run for race day.
+    - The third week and final week of the training plan MUST start on ${finalWeek}. The mileage for this week should be 20% - 30% of the peak week plus the 26.2 mile long run for race day.
 
     Ensure that the plan strictly follows these requirements:
     1. The ${numMaxLongRuns} ${longRun}-mile long runs must be scheduled for the weeks of ${getMaxLongRunDates(

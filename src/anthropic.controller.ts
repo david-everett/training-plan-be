@@ -23,7 +23,7 @@ export class AnthropicController {
   @Post('training-plan')
   async createTrainingPlan(
     @Body('userId') userId: string,
-    @Body('raceName') raceName: string,
+    @Body('raceId') raceId: number,
     @Body('race') race: string,
     @Body('date') date: string,
     @Body('longRun') longRun: number,
@@ -61,7 +61,6 @@ export class AnthropicController {
       const { trainingPlan: plan, tokenUsage } =
         await this.anthropicService.generateTrainingPlan(
           userId,
-          raceName,
           race,
           date,
           runningStatsData.training_data,
@@ -89,7 +88,7 @@ export class AnthropicController {
           .insert({
             user_id: userId,
             plan: parseTrainingPlan(JSON.stringify(trainingPlan)),
-            race_name: raceName,
+            race_id: raceId.toString(), // Convert raceId to string here
             race: race,
             date: date,
             cost: totalCost,
@@ -107,7 +106,6 @@ export class AnthropicController {
     }
 
     if (attempts === maxAttempts) {
-      // console.log('Generated training plan:', trainingPlan);
       console.log(
         'First week date check:',
         checkFirstWeekDate([trainingPlan], expectedStartDate),
