@@ -21,6 +21,7 @@ export function checkMaxLongRun(plan: any, longRun: number): boolean {
     return false;
   }
   const longRunValues = plan
+    .slice(0, -1) // Exclude the last week (race week)
     .map((week: any) => week?.long_run)
     .filter((value: any) => typeof value === 'number');
   const maxLongRun = Math.max(...longRunValues);
