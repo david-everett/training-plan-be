@@ -130,7 +130,9 @@ export class AnthropicService {
     - Week 2 of taper: Further reduce mileage to about 50% of the peak week, with a long run of ${Math.round(
       longRun * 0.4,
     )} miles.
-    - The third week and final week of the training plan MUST start on ${finalWeek}. The mileage for this week should be 20% - 30% of the peak week plus the 26.2 mile long run for race day.
+    - The third week and final week of the training plan MUST start on ${finalWeek}. The mileage for this week should be 20% - 30% of the peak week plus the ${
+      race === 'Marathon' ? '26.2' : race === 'Half Marathon' ? '13.1' : ''
+    } mile long run for race day.
 
     Ensure that the plan strictly follows these requirements:
     1. The ${numMaxLongRuns} ${longRun}-mile long runs must be scheduled for the weeks of ${getMaxLongRunDates(
