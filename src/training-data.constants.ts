@@ -182,3 +182,42 @@ export const HALF_MARATHON_TRAINING_PLAN_DOCUMENT = `
 </document_content>
 </document>
 `;
+
+export const FIVE_K_TRAINING_PLAN_DOCUMENT = `
+<document index="1">
+<source>trainingplan.txt</source>
+<document_content>{
+  "beginner": [
+    {"week": 1, "total_miles": 7, "long_run": 1.5},
+    {"week": 2, "total_miles": 8, "long_run": 1.75},
+    {"week": 3, "total_miles": 9, "long_run": 2},
+    {"week": 4, "total_miles": 9.5, "long_run": 2.25},
+    {"week": 5, "total_miles": 11, "long_run": 2.5},
+    {"week": 6, "total_miles": 12, "long_run": 2.75},
+    {"week": 7, "total_miles": 13, "long_run": 3},
+    {"week": 8, "total_miles": 5, "long_run": "3.1"}
+  ],
+  "intermediate": [
+    {"week": 1, "total_miles": 12, "long_run": 5},
+    {"week": 2, "total_miles": 13, "long_run": 5},
+    {"week": 3, "total_miles": 14, "long_run": 6},
+    {"week": 4, "total_miles": 15, "long_run": 6},
+    {"week": 5, "total_miles": 16, "long_run": 6},
+    {"week": 6, "total_miles": 18, "long_run": 7},
+    {"week": 7, "total_miles": 19, "long_run": 7},
+    {"week": 8, "total_miles": 10, "long_run": "3.1"}
+  ],
+  "expert": [
+    {"week": 1, "total_miles": 16, "long_run": 6},
+    {"week": 2, "total_miles": 18, "long_run": 6},
+    {"week": 3, "total_miles": 19, "long_run": 7},
+    {"week": 4, "total_miles": 21, "long_run": 7},
+    {"week": 5, "total_miles": 22, "long_run": 7},
+    {"week": 6, "total_miles": 24, "long_run": 8},
+    {"week": 7, "total_miles": 26, "long_run": 8},
+    {"week": 8, "total_miles": 14, "long_run": "3.1"}
+  ]
+}
+</document_content>
+</document>
+`;

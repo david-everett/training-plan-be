@@ -55,11 +55,27 @@ export class AnthropicController {
     let attempts = 0;
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
-    const maxAttempts = 1;
+    const maxAttempts = 3;
 
     while (attempts < maxAttempts) {
+      let generateTrainingPlanMethod;
+
+      if (race === 'Marathon' || race === 'Half Marathon') {
+        generateTrainingPlanMethod =
+          this.anthropicService.generateTrainingPlan.bind(
+            this.anthropicService,
+          );
+      } else if (race === '5K' || race === '10K') {
+        generateTrainingPlanMethod =
+          this.anthropicService.generateShortRaceTrainingPlan.bind(
+            this.anthropicService,
+          );
+      } else {
+        throw new Error(`Unsupported race type: ${race}`);
+      }
+
       const { trainingPlan: plan, tokenUsage } =
-        await this.anthropicService.generateTrainingPlan(
+        await generateTrainingPlanMethod(
           userId,
           race,
           date,

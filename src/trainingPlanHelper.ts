@@ -62,15 +62,32 @@ export function getStartDate(currentDate: Date): Date {
   }
 }
 
-export function getCurrentCondition(weeklyMileage: number): string {
-  if (weeklyMileage > 50) {
-    return 'advanced';
-  } else if (weeklyMileage >= 40) {
-    return 'intermediate';
-  } else {
-    return 'novice';
+export function getCurrentCondition(
+  weeklyMileage: number,
+  race: string,
+): string {
+  if (race === 'Marathon' || race === 'Half Marathon') {
+    if (weeklyMileage > 50) {
+      return 'advanced';
+    } else if (weeklyMileage >= 40) {
+      return 'intermediate';
+    } else {
+      return 'novice';
+    }
+  } else if (race === '5K' || race === '10K') {
+    if (weeklyMileage > 30) {
+      return 'advanced';
+    } else if (weeklyMileage >= 20) {
+      return 'intermediate';
+    } else {
+      return 'beginner';
+    }
   }
+
+  // Default condition if race is not recognized
+  return 'beginner';
 }
+
 export function getNextFullWeek(dateString: string): string {
   const date = new Date(dateString);
   const nextMonday = new Date(

@@ -6,6 +6,7 @@ import {
   RACE_INFO,
   TRAINING_PLAN_DOCUMENT,
   HALF_MARATHON_TRAINING_PLAN_DOCUMENT,
+  FIVE_K_TRAINING_PLAN_DOCUMENT,
 } from './training-data.constants';
 import { HttpService } from '@nestjs/axios';
 import {
@@ -57,7 +58,7 @@ export class AnthropicService {
       4,
       currentDate,
     );
-    const currentCondition = getCurrentCondition(weeklyMileage);
+    const currentCondition = getCurrentCondition(weeklyMileage, race);
 
     function getHighMileageText(
       currentMileage: number,
@@ -200,5 +201,131 @@ export class AnthropicService {
       console.error('Error calling Anthropic API:', error.response.data);
       throw error;
     }
+  }
+
+  async generateShortRaceTrainingPlan(
+    userId: string,
+    race: string,
+    date: string,
+    userRunningData: UserRunningData,
+    longRun: number,
+    numMaxLongRuns: number,
+    weeklyMileage: number,
+    approach: string,
+  ): Promise<{
+    trainingPlan: string;
+    tokenUsage: { inputTokens: number; outputTokens: number };
+  }> {
+    const currentDate = new Date();
+    const startDate = getStartDate(currentDate);
+    const finalWeek = getRaceWeekStartDate(date);
+    const lastFewWeeksMileage = getLastFewWeeksMileage(
+      userRunningData,
+      4,
+      currentDate,
+    );
+    const currentCondition = getCurrentCondition(weeklyMileage, race);
+
+    function getHighMileageText(
+      currentMileage: number,
+      highMileage: number,
+    ): string {
+      if (currentMileage < highMileage * 0.5) {
+        return `reached only once during the week of ${getHighMileageWeekDate(
+          date,
+        )}`;
+      } else {
+        return '';
+      }
+    }
+    const prompt = `<documents>
+${FIVE_K_TRAINING_PLAN_DOCUMENT}
+</documents>
+
+<system>
+You are a ${race} training coach helping runners in the future. Use the attached training plan as a guide to create a personalized ${race} training plan in JSON format. The plan should start on ${
+      startDate.toISOString().split('T')[0]
+    } and lead up to the race which is during the week of ${finalWeek}.
+${
+  weeklyMileage > 26
+    ? `It is okay to include higher mileage weeks than what is specified in the plan. Please cap the weekly milage at ${weeklyMileage}`
+    : ''
+}
+
+Current Week Mileage:
+- I have run ${getCurrentWeekMileage(
+      userRunningData,
+      currentDate,
+    )} miles so far this week.
+- There are ${7 - currentDate.getDay()} days remaining in the current week.
+
+Current Condition:
+- I am a ${currentCondition} runner, currently running an average of ${lastFewWeeksMileage} miles per week.
+
+Initial Mileage Build-Up:
+- ${
+      weeklyMileage < lastFewWeeksMileage
+        ? `Since the target long run distance (${weeklyMileage} miles) is lower than my current weekly mileage (${lastFewWeeksMileage} miles), start the plan at my current mileage level and maintain it for the first few weeks.`
+        : `Gradually increase mileage, starting from my current ${lastFewWeeksMileage} miles per week.`
+    }
+- Include rest weeks every 3-4 weeks to allow for recovery.
+- ${getHoldMileageText(approach, weeklyMileage)}
+
+Key Training Milestones:
+    - Include ${numMaxLongRuns} ${longRun}-mile long runs on the following weeks: ${getMaxLongRunDates(
+      date,
+      numMaxLongRuns,
+    )}. You may only includes runs at ${longRun} on those dates.
+    - Each week should be ${weeklyMileage} miles or less, ${getHighMileageText(
+      lastFewWeeksMileage,
+      weeklyMileage,
+    )}.
+
+Rest Weeks:
+- Explicitly include rest weeks, particularly following high-mileage weeks.
+
+Final Taper:
+- Include a 1-2 week tapering period leading up to the ${race} race.
+- Week 1 of taper: Reduce mileage to about 80% of the peak week
+- Week 2 of taper (race week): Further reduce mileage to about 60% of the peak week
+
+Ensure that the plan strictly follows these requirements:
+1. The weekly mileage must not exceed ${weeklyMileage} miles.
+2. Rest weeks must be included after high-mileage weeks.
+3. The final 1-2 week taper should follow the mileage and long run guidelines provided above, with decreasing mileage and long run distances each week.
+4. Weeks start on Monday starting with the first week being ${
+      startDate.toISOString().split('T')[0]
+    }.
+5. Round the weekly mileage to the nearest whole number of miles.
+
+Please provide the plan strictly in valid JSON format, with each weekly entry enclosed in curly braces and key-value pairs for "week" which is the date of the Monday to start the week, "total miles", and "long run". It is imperative that you stick to these column names.
+Ensure the plan aligns with the progressive mileage increase, key training milestones, and tapering period outlined above.
+
+Return ONLY the JSON object, without any additional text, explanations, or other formatting. It is crucial that you return ONLY the JSON data, as any additional text will cause parsing errors. The JSON object should be directly parsable by standard JSON parsers without any modifications.
+</system>
+`;
+    console.log(prompt);
+    const response = await this.callAnthropicApi(prompt);
+    if (!response.content[0] || !response.content[0].text) {
+      console.log(response);
+      throw new Error('Unexpected response from Anthropic API');
+    }
+
+    let parsedPlan;
+    try {
+      parsedPlan = JSON.parse(response.content[0].text);
+    } catch (error) {
+      console.error('Error parsing JSON response:', error);
+      console.log('Response text:', response.content[0].text);
+      throw new Error('Invalid JSON response from Anthropic API');
+    }
+
+    return {
+      trainingPlan: parsedPlan,
+      tokenUsage: {
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+      },
+    };
   }
 }
